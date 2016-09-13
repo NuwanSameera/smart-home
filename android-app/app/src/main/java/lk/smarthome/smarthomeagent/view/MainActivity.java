@@ -17,8 +17,6 @@ import android.view.View;
 import com.estimote.sdk.SystemRequirementsChecker;
 
 import lk.smarthome.smarthomeagent.R;
-import lk.smarthome.smarthomeagent.controller.DbHandler;
-import lk.smarthome.smarthomeagent.model.SmartRegion;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
