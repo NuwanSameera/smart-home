@@ -14,9 +14,17 @@ import com.estimote.sdk.Region;
 import java.util.List;
 import java.util.UUID;
 
+import lk.smarthome.smarthomeagent.controller.DbHandler;
+import lk.smarthome.smarthomeagent.model.SmartRegion;
+import lk.smarthome.smarthomeagent.view.MainActivity;
+
 public class SmartHomeApplication extends Application {
 
-    private BeaconManager beaconManager;
+    private static BeaconManager beaconManager;
+
+    public static BeaconManager getBeaconManager(){
+        return  beaconManager;
+    }
 
     @Override
     public void onCreate() {
@@ -26,33 +34,33 @@ public class SmartHomeApplication extends Application {
         beaconManager.setMonitoringListener(new BeaconManager.MonitoringListener() {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> list) {
-                String ids = "";
-                for (Beacon b : list){
-                    ids += b.getProximityUUID() + "\n";
-                }
-                showNotification("Entered to " + region.getIdentifier(), ids);
+                showNotification("You have entered", region.getIdentifier());
             }
             @Override
             public void onExitedRegion(Region region) {
-                showNotification("Exit from " + region.getIdentifier(), "");
+                showNotification("You have leaved" + region.getIdentifier(), region.getIdentifier());
             }
         });
         beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
             @Override
             public void onServiceReady() {
-                beaconManager.startMonitoring(new Region("monitored region",
-                        UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D"), 22504, 48827));
+                DbHandler dbHandler = DbHandler.getInstance(getApplicationContext());
+                List<SmartRegion> regions = dbHandler.getRegions();
+                for (SmartRegion region : regions){
+                    beaconManager.startMonitoring(new Region(region.getName(),
+                            UUID.fromString(Constants.UUID), region.getMajor(), region.getMinor()));
+                }
             }
         });
     }
 
-    public void showNotification(String title, String message) {
+    private void showNotification(String title, String message) {
         Intent notifyIntent = new Intent(this, MainActivity.class);
         notifyIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivities(this, 0,
                 new Intent[]{notifyIntent}, PendingIntent.FLAG_UPDATE_CURRENT);
         Notification notification = new Notification.Builder(this)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setSmallIcon(R.drawable.icon_smart_house)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setAutoCancel(true)

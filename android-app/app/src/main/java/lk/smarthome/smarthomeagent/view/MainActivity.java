@@ -1,8 +1,9 @@
-package lk.smarthome.smarthomeagent;
+package lk.smarthome.smarthomeagent.view;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -12,6 +13,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.estimote.sdk.SystemRequirementsChecker;
+
+import lk.smarthome.smarthomeagent.R;
+import lk.smarthome.smarthomeagent.controller.DbHandler;
+import lk.smarthome.smarthomeagent.model.SmartRegion;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -65,6 +70,12 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            DbHandler dbHandler = DbHandler.getInstance(getApplicationContext());
+            SmartRegion region = new SmartRegion();
+            region.setName("Living Room");
+            region.setMajor(21017);
+            region.setMinor(45935);
+            dbHandler.addRegion(region);
             return true;
         }
 
@@ -76,11 +87,19 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getSupportFragmentManager();
 
         if (id == R.id.nav_home) {
             setTitle(item.getTitle());
-        } else if (id == R.id.nav_locations) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.content_frame, ListViewFragment.newInstance(0))
+                    .commit();
+        } else if (id == R.id.nav_areas) {
             setTitle(item.getTitle());
+            fragmentManager.beginTransaction()
+                    .replace(R.id.content_frame, ListViewFragment.newInstance(0))
+                    .commit();
         } else if (id == R.id.nav_share) {
             try {
                 Intent i = new Intent(Intent.ACTION_SEND);

@@ -7,9 +7,9 @@
             android:icon="@drawable/ic_home_black_24dp"
             android:title="Current Location" />
         <item
-            android:id="@+id/nav_locations"
+            android:id="@+id/nav_areas"
             android:icon="@drawable/ic_dvr_black_24dp"
-            android:title="All Locations" />
+            android:title="Areas" />
     </group>
 
     <item android:title="App">
