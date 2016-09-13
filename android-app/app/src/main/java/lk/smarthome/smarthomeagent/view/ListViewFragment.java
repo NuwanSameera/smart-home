@@ -14,7 +14,7 @@ import lk.smarthome.smarthomeagent.controller.RegionArrayAdaptor;
 
 public class ListViewFragment extends Fragment {
 
-    private static final String ARG_REGION_INDEX = "list_number";
+    private static final String ARG_REGION_INDEX = "region_index";
 
     private View rootView;
 

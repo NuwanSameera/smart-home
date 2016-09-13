@@ -19,7 +19,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".view.AddRegionActivity"
+            android:label="Add New Area"></activity>
     </application>
 
 </manifest>
