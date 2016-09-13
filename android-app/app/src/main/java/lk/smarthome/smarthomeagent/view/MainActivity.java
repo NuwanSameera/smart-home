@@ -87,12 +87,6 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            DbHandler dbHandler = DbHandler.getInstance(getApplicationContext());
-            SmartRegion region = new SmartRegion();
-            region.setName("Living Room");
-            region.setMajor(21017);
-            region.setMinor(45935);
-            dbHandler.addRegion(region);
             return true;
         }
 
