@@ -93,6 +93,76 @@ public class DbHandler {
         return regions;
     }
 
+    public SmartRegion getRegion(int major, int minor) {
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        String[] projection = {
+                DataContract.RegionEntry.COLUMN_ID,
+                DataContract.RegionEntry.COLUMN_NAME,
+                DataContract.RegionEntry.COLUMN_MAJOR,
+                DataContract.RegionEntry.COLUMN_MINOR
+        };
+
+        String selection = DataContract.RegionEntry.COLUMN_MAJOR + " = ? AND " + DataContract.RegionEntry.COLUMN_MINOR + " = ?";
+        String[] selectionArgs = {String.valueOf(major), String.valueOf(minor)};
+
+        Cursor cursor = db.query(
+                DataContract.RegionEntry.TABLE_NAME, // The table to query
+                projection,                          // The columns to return
+                selection,                                // The columns for the WHERE clause
+                selectionArgs,                                // The values for the WHERE clause
+                null,                                // group the rows
+                null,                                // filter by row groups
+                null                                 // The sort order
+        );
+
+        SmartRegion region = null;
+        if (cursor.moveToFirst()) {
+            region = new SmartRegion();
+            region.setId(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_ID)));
+            region.setName(cursor.getString(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_NAME)));
+            region.setMajor(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_MAJOR)));
+            region.setMinor(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_MINOR)));
+        }
+        cursor.close();
+        return region;
+    }
+
+    public SmartRegion getRegion(int id) {
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        String[] projection = {
+                DataContract.RegionEntry.COLUMN_ID,
+                DataContract.RegionEntry.COLUMN_NAME,
+                DataContract.RegionEntry.COLUMN_MAJOR,
+                DataContract.RegionEntry.COLUMN_MINOR
+        };
+
+        String selection = DataContract.RegionEntry.COLUMN_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(id)};
+
+        Cursor cursor = db.query(
+                DataContract.RegionEntry.TABLE_NAME, // The table to query
+                projection,                          // The columns to return
+                selection,                                // The columns for the WHERE clause
+                selectionArgs,                                // The values for the WHERE clause
+                null,                                // group the rows
+                null,                                // filter by row groups
+                null                                 // The sort order
+        );
+
+        SmartRegion region = null;
+        if (cursor.moveToFirst()) {
+            region = new SmartRegion();
+            region.setId(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_ID)));
+            region.setName(cursor.getString(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_NAME)));
+            region.setMajor(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_MAJOR)));
+            region.setMinor(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_MINOR)));
+        }
+        cursor.close();
+        return region;
+    }
+
     public List<SmartDevice> getDevices(int regionId) {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
@@ -103,7 +173,7 @@ public class DbHandler {
         };
 
         String selection = DataContract.DeviceEntry.COLUMN_REGION_ID + " = ?";
-        String[] selectionArgs = { String.valueOf(regionId) };
+        String[] selectionArgs = {String.valueOf(regionId)};
 
         Cursor cursor = db.query(
                 DataContract.DeviceEntry.TABLE_NAME, // The table to query

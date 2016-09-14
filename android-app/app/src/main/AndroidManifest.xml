@@ -21,7 +21,14 @@
         </activity>
         <activity
             android:name=".view.AddRegionActivity"
-            android:label="Add New Area"></activity>
+            android:label="Add New Area" />
+        <activity
+            android:name=".view.AddDeviceActivity"
+            android:label="Add New Device" />
+        <activity
+            android:name=".view.DeviceListActivity"
+            android:label="@string/title_activity_device_list"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

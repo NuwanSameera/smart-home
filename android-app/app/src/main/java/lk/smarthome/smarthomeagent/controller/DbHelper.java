@@ -22,8 +22,9 @@ public class DbHelper extends SQLiteOpenHelper {
                     DataContract.RegionEntry.COLUMN_MINOR + " INTEGER)";
     private static final String SQL_CREATE_DEVICE =
             "CREATE TABLE " + DataContract.DeviceEntry.TABLE_NAME + " (" +
-                    DataContract.DeviceEntry.COLUMN_ID + " INTEGER PRIMARY KEY," +
-                    DataContract.DeviceEntry.COLUMN_NAME + " TEXT)";
+                    DataContract.DeviceEntry.COLUMN_ID + " INTEGER PRIMARY KEY, " +
+                    DataContract.DeviceEntry.COLUMN_NAME + " TEXT, " +
+                    DataContract.DeviceEntry.COLUMN_REGION_ID + " INTEGER)";
 
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

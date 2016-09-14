@@ -21,9 +21,14 @@ import lk.smarthome.smarthomeagent.view.MainActivity;
 public class SmartHomeApplication extends Application {
 
     private static BeaconManager beaconManager;
+    private static Region currentRegion;
 
     public static BeaconManager getBeaconManager(){
         return  beaconManager;
+    }
+
+    public static Region getCurrentRegion() {
+        return currentRegion;
     }
 
     @Override
@@ -35,10 +40,12 @@ public class SmartHomeApplication extends Application {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> list) {
                 showNotification("You have entered", region.getIdentifier());
+                currentRegion = region;
             }
             @Override
             public void onExitedRegion(Region region) {
-                showNotification("You have leaved" + region.getIdentifier(), region.getIdentifier());
+                showNotification("You have leaved", region.getIdentifier());
+                currentRegion = null;
             }
         });
         beaconManager.connect(new BeaconManager.ServiceReadyCallback() {

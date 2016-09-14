@@ -14,14 +14,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.estimote.sdk.Region;
 import com.estimote.sdk.SystemRequirementsChecker;
 
+import lk.smarthome.smarthomeagent.Constants;
 import lk.smarthome.smarthomeagent.R;
+import lk.smarthome.smarthomeagent.SmartHomeApplication;
+import lk.smarthome.smarthomeagent.controller.DbHandler;
+import lk.smarthome.smarthomeagent.model.SmartRegion;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static int ARG_REGION_INDEX = 0;
+    private static int regionIndex = 0;
+    private NavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,11 +40,13 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ARG_REGION_INDEX == 0) {
+                if (regionIndex == 0) {
                     Intent intent = new Intent(MainActivity.this, AddRegionActivity.class);
                     startActivity(intent);
                 } else {
-
+                    Intent intent = new Intent(MainActivity.this, AddDeviceActivity.class);
+                    intent.putExtra(Constants.ARG_REGION_INDEX, regionIndex);
+                    startActivity(intent);
                 }
             }
         });
@@ -49,14 +57,24 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        if (SmartHomeApplication.getCurrentRegion() != null) {
+            regionIndex = -1;
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         SystemRequirementsChecker.checkWithDefaultDialogs(this);
+        if (regionIndex == -1) {
+            navigationView.setCheckedItem(R.id.nav_home);
+            onNavigationItemSelected(navigationView.getMenu().getItem(0));
+        } else {
+            navigationView.setCheckedItem(R.id.nav_areas);
+            onNavigationItemSelected(navigationView.getMenu().getItem(1));
+        }
     }
 
     @Override
@@ -100,16 +118,26 @@ public class MainActivity extends AppCompatActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
 
         if (id == R.id.nav_home) {
-            setTitle(item.getTitle());
-            fragmentManager.beginTransaction()
-                    .replace(R.id.content_frame, ListViewFragment.newInstance(0))
-                    .commit();
+            Region currentRegion = SmartHomeApplication.getCurrentRegion();
+            if (currentRegion != null) {
+                setTitle(currentRegion.getIdentifier());
+                SmartRegion smartRegion = DbHandler.getInstance(getApplicationContext())
+                        .getRegion(currentRegion.getMajor(), currentRegion.getMinor());
+                regionIndex = smartRegion.getId();
+                fragmentManager.beginTransaction()
+                        .replace(R.id.content_frame, ListViewFragment.newInstance(regionIndex))
+                        .commit();
+            } else {
+                regionIndex = -1;
+                onNavigationItemSelected(navigationView.getMenu().getItem(1));
+                navigationView.setCheckedItem(R.id.nav_areas);
+            }
         } else if (id == R.id.nav_areas) {
             setTitle(item.getTitle());
             fragmentManager.beginTransaction()
                     .replace(R.id.content_frame, ListViewFragment.newInstance(0))
                     .commit();
-            ARG_REGION_INDEX = 0;
+            regionIndex = 0;
         } else if (id == R.id.nav_share) {
             try {
                 Intent i = new Intent(Intent.ACTION_SEND);
