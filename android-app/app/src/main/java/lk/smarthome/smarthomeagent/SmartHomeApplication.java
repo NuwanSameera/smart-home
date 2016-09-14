@@ -6,10 +6,19 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.provider.Settings;
+import android.util.Log;
 
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+
+import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,11 +29,13 @@ import lk.smarthome.smarthomeagent.view.MainActivity;
 
 public class SmartHomeApplication extends Application {
 
+    private static final String TAG = SmartHomeApplication.class.getSimpleName();
     private static BeaconManager beaconManager;
     private static Region currentRegion;
+    private static MqttAndroidClient mqttAndroidClient;
 
-    public static BeaconManager getBeaconManager(){
-        return  beaconManager;
+    public static BeaconManager getBeaconManager() {
+        return beaconManager;
     }
 
     public static Region getCurrentRegion() {
@@ -35,6 +46,28 @@ public class SmartHomeApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), Constants.ACTIVEMQ_URL, Settings.Secure.ANDROID_ID);
+        mqttAndroidClient.setCallback(new MqttCallback() {
+
+            @Override
+            public void connectionLost(Throwable cause) {
+
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) throws Exception {
+
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+
+            }
+        });
+
+        MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
+        mqttConnectOptions.setCleanSession(false);
+
         beaconManager = new BeaconManager(getApplicationContext());
         beaconManager.setMonitoringListener(new BeaconManager.MonitoringListener() {
             @Override
@@ -42,6 +75,7 @@ public class SmartHomeApplication extends Application {
                 showNotification("You have entered", region.getIdentifier());
                 currentRegion = region;
             }
+
             @Override
             public void onExitedRegion(Region region) {
                 showNotification("You have leaved", region.getIdentifier());
@@ -53,7 +87,7 @@ public class SmartHomeApplication extends Application {
             public void onServiceReady() {
                 DbHandler dbHandler = DbHandler.getInstance(getApplicationContext());
                 List<SmartRegion> regions = dbHandler.getRegions();
-                for (SmartRegion region : regions){
+                for (SmartRegion region : regions) {
                     beaconManager.startMonitoring(new Region(region.getName(),
                             UUID.fromString(Constants.UUID), region.getMajor(), region.getMinor()));
                 }
@@ -77,5 +111,20 @@ public class SmartHomeApplication extends Application {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(1, notification);
+    }
+
+    public static void publishMessage(int deviceId) {
+
+        try {
+            MqttMessage message = new MqttMessage();
+            message.setPayload(String.valueOf(deviceId).getBytes());
+            mqttAndroidClient.publish("SmartHome/Device", message);
+            Log.i(TAG, "Message Published");
+            if (!mqttAndroidClient.isConnected()) {
+
+            }
+        } catch (MqttException e) {
+            Log.e("MQTT client", e.getMessage());
+        }
     }
 }
