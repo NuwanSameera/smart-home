@@ -14,7 +14,11 @@ import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -56,7 +60,7 @@ public class SmartHomeApplication extends Application {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-
+                Log.d(TAG, topic + " " + message.toString());
             }
 
             @Override
@@ -67,6 +71,29 @@ public class SmartHomeApplication extends Application {
 
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setCleanSession(false);
+
+        try {
+            //addToHistory("Connecting to " + serverUri);
+            mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    DisconnectedBufferOptions disconnectedBufferOptions = new DisconnectedBufferOptions();
+                    disconnectedBufferOptions.setBufferEnabled(true);
+                    disconnectedBufferOptions.setBufferSize(100);
+                    disconnectedBufferOptions.setPersistBuffer(false);
+                    disconnectedBufferOptions.setDeleteOldestMessages(false);
+                    mqttAndroidClient.setBufferOpts(disconnectedBufferOptions);
+                    subscribeToTopic();
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.e(TAG, "Unable to connect", exception);
+                }
+            });
+        } catch (MqttException ex){
+            ex.printStackTrace();
+        }
 
         beaconManager = new BeaconManager(getApplicationContext());
         beaconManager.setMonitoringListener(new BeaconManager.MonitoringListener() {
@@ -113,8 +140,36 @@ public class SmartHomeApplication extends Application {
         notificationManager.notify(1, notification);
     }
 
-    public static void publishMessage(int deviceId) {
+    public void subscribeToTopic(){
+        try {
+            mqttAndroidClient.subscribe("SmartHome/Phone", 0, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    Log.i(TAG, "Subscribed!");
+                }
 
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.e(TAG, "Failed to subscribe", exception);
+                }
+            });
+
+            // THIS DOES NOT WORK!
+            mqttAndroidClient.subscribe("SmartHome/Phone", 0, new IMqttMessageListener() {
+                @Override
+                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                    // message Arrived!
+                    System.out.println("Message: " + topic + " : " + new String(message.getPayload()));
+                }
+            });
+
+        } catch (MqttException ex){
+            System.err.println("Exception whilst subscribing");
+            ex.printStackTrace();
+        }
+    }
+
+    public static void publishMessage(int deviceId) {
         try {
             MqttMessage message = new MqttMessage();
             message.setPayload(String.valueOf(deviceId).getBytes());
