@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.provider.Settings;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.estimote.sdk.Beacon;
@@ -17,26 +18,31 @@ import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import lk.smarthome.smarthomeagent.controller.DbHandler;
+import lk.smarthome.smarthomeagent.model.SmartDevice;
 import lk.smarthome.smarthomeagent.model.SmartRegion;
 import lk.smarthome.smarthomeagent.view.MainActivity;
 
 public class SmartHomeApplication extends Application {
 
     private static final String TAG = SmartHomeApplication.class.getSimpleName();
+
     private static BeaconManager beaconManager;
     private static Region currentRegion;
     private static MqttAndroidClient mqttAndroidClient;
+
+    private DbHandler dbHandler;
+
 
     public static BeaconManager getBeaconManager() {
         return beaconManager;
@@ -50,6 +56,8 @@ public class SmartHomeApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        dbHandler = DbHandler.getInstance(getApplicationContext());
+
         mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), Constants.ACTIVEMQ_URL, Settings.Secure.ANDROID_ID);
         mqttAndroidClient.setCallback(new MqttCallback() {
 
@@ -61,6 +69,9 @@ public class SmartHomeApplication extends Application {
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 Log.d(TAG, topic + " " + message.toString());
+                Intent intent = new Intent(Constants.MESSAGE_ARRIVED);
+                intent.putExtra("message", message.toString());
+                LocalBroadcastManager.getInstance(SmartHomeApplication.this).sendBroadcast(intent);
             }
 
             @Override
@@ -91,7 +102,7 @@ public class SmartHomeApplication extends Application {
                     Log.e(TAG, "Unable to connect", exception);
                 }
             });
-        } catch (MqttException ex){
+        } catch (MqttException ex) {
             ex.printStackTrace();
         }
 
@@ -101,18 +112,19 @@ public class SmartHomeApplication extends Application {
             public void onEnteredRegion(Region region, List<Beacon> list) {
                 showNotification("You have entered", region.getIdentifier());
                 currentRegion = region;
+                onRegionChange(region.getIdentifier(), true);
             }
 
             @Override
             public void onExitedRegion(Region region) {
                 showNotification("You have leaved", region.getIdentifier());
                 currentRegion = null;
+                onRegionChange(region.getIdentifier(), false);
             }
         });
         beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
             @Override
             public void onServiceReady() {
-                DbHandler dbHandler = DbHandler.getInstance(getApplicationContext());
                 List<SmartRegion> regions = dbHandler.getRegions();
                 for (SmartRegion region : regions) {
                     beaconManager.startMonitoring(new Region(region.getName(),
@@ -120,6 +132,15 @@ public class SmartHomeApplication extends Application {
                 }
             }
         });
+    }
+
+    private void onRegionChange(String regionIdentifier, boolean isEntrance) {
+        Intent intent = new Intent(isEntrance ? Constants.ENTERED_TO_REGION : Constants.LEAVE_FROM_REGION);
+        intent.putExtra("region", regionIdentifier);
+        LocalBroadcastManager.getInstance(SmartHomeApplication.this).sendBroadcast(intent);
+        SmartRegion smartRegion = dbHandler.getRegion(regionIdentifier);
+        List<SmartDevice> devices = dbHandler.getDevices(smartRegion.getId());
+        publishMessage(devices, isEntrance ? "On" : "Off");
     }
 
     private void showNotification(String title, String message) {
@@ -140,7 +161,7 @@ public class SmartHomeApplication extends Application {
         notificationManager.notify(1, notification);
     }
 
-    public void subscribeToTopic(){
+    public void subscribeToTopic() {
         try {
             mqttAndroidClient.subscribe("SmartHome/Phone", 0, null, new IMqttActionListener() {
                 @Override
@@ -153,31 +174,23 @@ public class SmartHomeApplication extends Application {
                     Log.e(TAG, "Failed to subscribe", exception);
                 }
             });
-
-            // THIS DOES NOT WORK!
-            mqttAndroidClient.subscribe("SmartHome/Phone", 0, new IMqttMessageListener() {
-                @Override
-                public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    // message Arrived!
-                    System.out.println("Message: " + topic + " : " + new String(message.getPayload()));
-                }
-            });
-
-        } catch (MqttException ex){
+        } catch (MqttException ex) {
             System.err.println("Exception whilst subscribing");
             ex.printStackTrace();
         }
     }
 
-    public static void publishMessage(int deviceId) {
+    public static void publishMessage(List<SmartDevice> devices, String action) {
+        List<String> deviceIds = new ArrayList<>();
+        for (SmartDevice d : devices) {
+            deviceIds.add(String.valueOf(d.getId()));
+        }
+        String payload = android.text.TextUtils.join(",", deviceIds) + ":" + action;
         try {
             MqttMessage message = new MqttMessage();
-            message.setPayload(String.valueOf(deviceId).getBytes());
+            message.setPayload(payload.getBytes());
             mqttAndroidClient.publish("SmartHome/Device", message);
-            Log.i(TAG, "Message Published");
-            if (!mqttAndroidClient.isConnected()) {
-
-            }
+            Log.i(TAG, "Message Published: " + payload);
         } catch (MqttException e) {
             Log.e("MQTT client", e.getMessage());
         }

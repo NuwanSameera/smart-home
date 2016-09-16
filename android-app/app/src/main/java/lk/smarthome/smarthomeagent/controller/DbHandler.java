@@ -163,6 +163,41 @@ public class DbHandler {
         return region;
     }
 
+    public SmartRegion getRegion(String identifier) {
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        String[] projection = {
+                DataContract.RegionEntry.COLUMN_ID,
+                DataContract.RegionEntry.COLUMN_NAME,
+                DataContract.RegionEntry.COLUMN_MAJOR,
+                DataContract.RegionEntry.COLUMN_MINOR
+        };
+
+        String selection = DataContract.RegionEntry.COLUMN_NAME + " = ?";
+        String[] selectionArgs = {String.valueOf(identifier)};
+
+        Cursor cursor = db.query(
+                DataContract.RegionEntry.TABLE_NAME, // The table to query
+                projection,                          // The columns to return
+                selection,                           // The columns for the WHERE clause
+                selectionArgs,                       // The values for the WHERE clause
+                null,                                // group the rows
+                null,                                // filter by row groups
+                null                                 // The sort order
+        );
+
+        SmartRegion region = null;
+        if (cursor.moveToFirst()) {
+            region = new SmartRegion();
+            region.setId(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_ID)));
+            region.setName(cursor.getString(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_NAME)));
+            region.setMajor(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_MAJOR)));
+            region.setMinor(cursor.getInt(cursor.getColumnIndex(DataContract.RegionEntry.COLUMN_MINOR)));
+        }
+        cursor.close();
+        return region;
+    }
+
     public List<SmartDevice> getDevices(int regionId) {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 

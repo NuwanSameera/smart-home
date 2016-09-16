@@ -1,15 +1,15 @@
+relay_status = "On"
+relay = 0
+gpio.mode(relay, gpio.OUTPUT)
+gpio.write(relay, gpio.LOW)
+
 wifi.setmode(wifi.STATION)
-wifi.sta.config("ssid", "password")
+wifi.sta.config("CK Home", "MyWiFi@4G")
 client_connected = false
 m = mqtt.Client("ESP8266-" .. node.chipid(), 120, "", "")
 
 tmr.alarm(0, 10000, 1, function()
-    if (client_connected) then
-        local payload = "ESP8266-" .. node.chipid()
-        m:publish("SmartHome/Phone", payload, 0, 0, function(client)
-            print("published")
-        end)
-    else
+    if (client_connected == false) then
         connectMQTTClient()
     end
 end)
@@ -21,7 +21,7 @@ function connectMQTTClient()
     else
         print("Client IP: " .. ip)
         print("Trying to connect MQTT client")
-        m:connect("192.168.8.101", 1883, 0, function(client)
+        m:connect("192.168.8.102", 1883, 0, function(client)
             client_connected = true
             print("MQTT client connected")
             subscribeToMQTTQueue()
@@ -36,9 +36,31 @@ function subscribeToMQTTQueue()
     m:on("message", function(client, topic, message)
         print("MQTT message received")
         print(message)
+        processMessage(message)
     end)
     m:on("offline", function(client)
         print("Disconnected")
         client_connected = false
     end)
+end
+
+function processMessage(message)
+    if (string.match(message, node.chipid())) then
+        if (string.match(message, "On")) then
+            gpio.write(relay, gpio.HIGH)
+            relay_status = "On"
+        elseif (string.match(message, "Off")) then
+            gpio.write(relay, gpio.LOW)
+            relay_status = "Off"
+        end
+        sendCurrentStatus()
+    end
+end
+
+function sendCurrentStatus()
+    if (client_connected) then
+        local payload = relay_status
+        m:publish("SmartHome/Phone", payload, 0, 0, function(client)
+        end)
+    end
 end
