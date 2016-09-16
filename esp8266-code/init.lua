@@ -4,7 +4,7 @@ gpio.mode(relay, gpio.OUTPUT)
 gpio.write(relay, gpio.LOW)
 
 wifi.setmode(wifi.STATION)
-wifi.sta.config("CK Home", "MyWiFi@4G")
+wifi.sta.config("<ssid>", "<password>")
 client_connected = false
 m = mqtt.Client("ESP8266-" .. node.chipid(), 120, "", "")
 
@@ -21,7 +21,7 @@ function connectMQTTClient()
     else
         print("Client IP: " .. ip)
         print("Trying to connect MQTT client")
-        m:connect("192.168.8.102", 1883, 0, function(client)
+        m:connect("<mqtt server ip>", 1883, 0, function(client)
             client_connected = true
             print("MQTT client connected")
             subscribeToMQTTQueue()
