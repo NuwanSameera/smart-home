@@ -58,7 +58,9 @@ public class SmartHomeApplication extends Application {
 
         dbHandler = DbHandler.getInstance(getApplicationContext());
 
-        mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), Constants.ACTIVEMQ_URL, Settings.Secure.ANDROID_ID);
+        mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), Constants.ACTIVEMQ_URL,
+                Settings.Secure.getString(getApplicationContext().getContentResolver(),
+                        Settings.Secure.ANDROID_ID));
         mqttAndroidClient.setCallback(new MqttCallback() {
 
             @Override
