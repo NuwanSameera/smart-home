@@ -13,9 +13,11 @@ import java.util.List;
 
 import lk.smarthome.smarthomeagent.Constants;
 import lk.smarthome.smarthomeagent.R;
+import lk.smarthome.smarthomeagent.SmartHomeApplication;
 import lk.smarthome.smarthomeagent.controller.DbHandler;
 import lk.smarthome.smarthomeagent.controller.DeviceArrayAdaptor;
 import lk.smarthome.smarthomeagent.controller.RegionArrayAdaptor;
+import lk.smarthome.smarthomeagent.model.SmartDevice;
 import lk.smarthome.smarthomeagent.model.SmartRegion;
 
 public class ListViewFragment extends Fragment {
@@ -67,9 +69,11 @@ public class ListViewFragment extends Fragment {
                 });
                 break;
             default:
-                DeviceArrayAdaptor deviceAdapter = new DeviceArrayAdaptor(this.getActivity().getBaseContext(),
-                        dbHandler.getDevices(regionIndex));
+                List<SmartDevice> devices = dbHandler.getDevices(regionIndex);
+                DeviceArrayAdaptor deviceAdapter
+                        = new DeviceArrayAdaptor(this.getActivity().getBaseContext(), devices);
                 listView.setAdapter(deviceAdapter);
+                SmartHomeApplication.publishMessage(devices, "status");
                 break;
         }
 

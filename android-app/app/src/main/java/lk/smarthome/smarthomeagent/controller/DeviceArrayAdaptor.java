@@ -18,8 +18,6 @@ import lk.smarthome.smarthomeagent.model.SmartDevice;
 
 public class DeviceArrayAdaptor extends ArrayAdapter<SmartDevice> {
 
-    private static final String TAG = DeviceArrayAdaptor.class.getSimpleName();
-
     private final Context context;
     private final List<SmartDevice> values;
 

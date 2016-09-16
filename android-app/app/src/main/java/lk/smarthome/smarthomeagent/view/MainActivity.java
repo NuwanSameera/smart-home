@@ -129,8 +129,8 @@ public class MainActivity extends AppCompatActivity
                         .commit();
             } else {
                 regionIndex = -1;
-                onNavigationItemSelected(navigationView.getMenu().getItem(1));
                 navigationView.setCheckedItem(R.id.nav_areas);
+                onNavigationItemSelected(navigationView.getMenu().getItem(1));
             }
         } else if (id == R.id.nav_areas) {
             setTitle(item.getTitle());
