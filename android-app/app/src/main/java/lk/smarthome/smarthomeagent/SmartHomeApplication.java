@@ -135,9 +135,6 @@ public class SmartHomeApplication extends Application {
     }
 
     private void onRegionChange(String regionIdentifier, boolean isEntrance) {
-        Intent intent = new Intent(isEntrance ? Constants.ENTERED_TO_REGION : Constants.LEAVE_FROM_REGION);
-        intent.putExtra("region", regionIdentifier);
-        LocalBroadcastManager.getInstance(SmartHomeApplication.this).sendBroadcast(intent);
         SmartRegion smartRegion = dbHandler.getRegion(regionIdentifier);
         List<SmartDevice> devices = dbHandler.getDevices(smartRegion.getId());
         publishMessage(devices, isEntrance ? "On" : "Off");

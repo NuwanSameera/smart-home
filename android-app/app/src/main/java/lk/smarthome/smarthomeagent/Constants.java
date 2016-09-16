@@ -8,6 +8,4 @@ public final class Constants {
     public static final String ARG_REGION_INDEX = "ARG_REGION_INDEX";
     public static final String ACTIVEMQ_URL = "tcp://192.168.8.102:1883";
     public static final String MESSAGE_ARRIVED = "lk.smarthome.smarthomeagent.MESSAGE_ARRIVED";
-    public static final String ENTERED_TO_REGION = "lk.smarthome.smarthomeagent.ENTERED_TO_REGION";
-    public static final String LEAVE_FROM_REGION = "lk.smarthome.smarthomeagent.LEAVE_FROM_REGION";
 }

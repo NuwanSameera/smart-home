@@ -51,7 +51,7 @@ public class DeviceArrayAdaptor extends ArrayAdapter<SmartDevice> {
             mViewHolder = (ViewHolder) convertView.getTag();
         }
         mViewHolder.textViewName.setText(values.get(position).getName());
-        mViewHolder.deviceSwitch.setTag(values.get(position).getId());
+        mViewHolder.deviceSwitch.setTag(String.valueOf(values.get(position).getId()));
         mViewHolder.deviceSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
